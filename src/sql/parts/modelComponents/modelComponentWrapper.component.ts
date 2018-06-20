@@ -146,6 +146,8 @@ export class ModelComponentWrapper extends AngularDisposable implements OnInit {
 		// set widget styles to conform to its box
 		el.style.overflow = 'hidden';
 		el.style.position = 'relative';
+		el.style.display = 'block';
+		el.style.height = '100%';
 	}
 
 	private updateTheme(theme: IColorTheme): void {
