@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { CreateStepData } from '../data/createStepData';
 import { AgentUtils } from '../agentUtils';
 import { CreateJobData } from '../data/createJobData';
+import { CreateJobDialog } from './createJobDialog';
 
 export class CreateStepDialog {
 
@@ -71,19 +72,22 @@ export class CreateStepDialog {
 	private jobId: string;
 	private server: string;
 
-	private jobModel: CreateJobData;
+	private parentDialog: CreateJobDialog;
+	private stepIndex: number;
 
 	constructor(
 		ownerUri: string,
 		jobId: string,
 		server: string,
-		jobModel?: CreateJobData
+		parentDialog?: CreateJobDialog,
+		stepIndex?: number
 	) {
 		this.model = new CreateStepData(ownerUri);
 		this.ownerUri = ownerUri;
 		this.jobId = jobId;
 		this.server = server;
-		this.jobModel = jobModel;
+		this.parentDialog = parentDialog;
+		this.stepIndex = stepIndex;
 	}
 
 	private initializeUIComponents() {
@@ -462,7 +466,17 @@ export class CreateStepDialog {
 		this.model.retryInterval = +this.retryIntervalBox.value;
 		this.model.failureAction = this.failureActionDropdown.value as string;
 		this.model.outputFileName = this.outputFileNameBox.value;
-		await this.model.save();
+		if (this.parentDialog) {
+			if (this.stepIndex) {
+				this.parentDialog.model.jobSteps.splice(this.stepIndex, 0, this.model);
+			} else {
+				this.parentDialog.model.jobSteps.push(this.model);
+			}
+
+			this.parentDialog.refreshSteps();
+		} else {
+			await this.model.save();
+		}
 	}
 
 	private openFileBrowserDialog(rootNode, selectedNode) {

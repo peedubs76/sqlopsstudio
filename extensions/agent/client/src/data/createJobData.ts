@@ -42,6 +42,8 @@ export class CreateJobData {
 
 	constructor(ownerUri: string) {
 		this._ownerUri = ownerUri;
+		this.jobSchedules = [];
+		this.jobSteps = [];
 	}
 
 	public get jobCategories(): string[] {
