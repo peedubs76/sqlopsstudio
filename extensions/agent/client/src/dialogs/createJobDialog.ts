@@ -65,6 +65,15 @@ export class CreateJobDialog {
 	private readonly PickScheduleButtonString: string = 'Pick...';
 	private readonly RemoveScheduleButtonString: string = 'Remove';
 
+	// Alerts tab strings
+	//
+	private readonly AlertsListString: string = 'Alert list';
+	private readonly AlertsTable_NameColumnString: string = 'Name';
+	private readonly AlertsTable_EnabledColumnString: string = 'Enabled';
+	private readonly AlertsTable_TypeColumnString: string = 'Type';
+	private readonly NewAlertButtonString: string = 'New...';
+	private readonly RemoveAlertButtonString: string = 'Remove';
+
 	// UI Components
 	//
 	private dialog: sqlops.window.modelviewdialog.Dialog;
@@ -113,6 +122,12 @@ export class CreateJobDialog {
 	private schedulesTable: sqlops.TableComponent;
 	private pickScheduleButton: sqlops.ButtonComponent;
 	private removeScheduleButton: sqlops.ButtonComponent;
+
+	// Alerts tab controls
+	//
+	private alertsTable: sqlops.TableComponent;
+	private newAlertButton: sqlops.ButtonComponent;
+	private removeAlertButton: sqlops.ButtonComponent;
 
 	public model: CreateJobData;
 
@@ -321,6 +336,50 @@ export class CreateJobDialog {
 	}
 
 	private initializeAlertsTab() {
+		this.alertsTab.registerContent(async view => {
+			this.alertsTable = view.modelBuilder.table().withProperties({
+				columns: [
+					this.AlertsTable_NameColumnString,
+					this.AlertsTable_EnabledColumnString,
+					this.AlertsTable_TypeColumnString
+				],
+				data: [],
+				height: 500
+			}).component();
+
+			this.alertsTable.onRowSelected(() => {
+				this.removeAlertButton.enabled = this.alertsTable.selectedRows && this.alertsTable.selectedRows.length === 1;
+			});
+
+			this.newAlertButton = view.modelBuilder.button().withProperties({
+				label: this.NewAlertButtonString,
+				width: 80
+			}).component();
+
+			this.newAlertButton.onDidClick(() => {
+				//TODO invoke new alert dialog
+			});
+
+			this.removeAlertButton = view.modelBuilder.button().withProperties({
+				label: this.RemoveAlertButtonString,
+				width: 80
+			}).component();
+
+			this.removeAlertButton.enabled = false;
+			this.removeAlertButton.onDidClick(() => {
+				if (this.alertsTable.selectedRows && this.alertsTable.selectedRows.length === 1) {
+					this.model.alerts.splice(this.alertsTable.selectedRows[0], 1);
+					this.refreshAlerts();
+				}
+			});
+			let formModel = view.modelBuilder.formContainer()
+				.withFormItems([{
+					component: this.alertsTable,
+					title: this.AlertsListString,
+					actions: [this.newAlertButton, this.removeAlertButton]
+				}]).withLayout({ width: '100%' }).component();
+			await view.initializeModel(formModel);
+		});
 	}
 
 	private initializeSchedulesTab() {
@@ -357,7 +416,7 @@ export class CreateJobDialog {
 
 			this.removeScheduleButton.onDidClick(() => {
 				if (this.schedulesTable.selectedRows && this.schedulesTable.selectedRows.length === 1) {
-					this.model.jobSchedules.splice(this.schedulesTable.selectedRows[0], 0);
+					this.model.jobSchedules.splice(this.schedulesTable.selectedRows[0], 1);
 					this.refreshSchedules();
 				}
 			});
@@ -548,5 +607,13 @@ export class CreateJobDialog {
 			schedules.push([]);
 		});
 		this.schedulesTable.data = schedules;
+	}
+
+	public refreshAlerts() {
+		let alerts = [];
+		this.model.alerts.forEach(alert => {
+			alerts.push([]);
+		});
+		this.alertsTable.data = alerts;
 	}
 }

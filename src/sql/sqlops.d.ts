@@ -1056,7 +1056,7 @@ declare module 'sqlops' {
 		wmiEvent = 4
 	}
 
-	export enum JobCompletionActionCondition{
+	export enum JobCompletionActionCondition {
 		Never = 0,
 		OnSuccess = 1,
 		OnFailure = 2,
@@ -1093,7 +1093,10 @@ declare module 'sqlops' {
 	}
 
 	export interface AgentJobScheduleInfo {
-
+		id: number;
+		name: string;
+		enabled: boolean;
+		description: string;
 	}
 
 	export interface AgentJobStep {

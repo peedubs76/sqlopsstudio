@@ -25,22 +25,22 @@ export class SchedulePickerData {
 		this._agentService = await AgentUtils.getAgentService();
 		this._schedules = [
 			{
-				ID: 1,
-				Name: '7AM',
-				Enabled: true,
-				Description: '7AM'
+				id: 1,
+				name: '7AM',
+				enabled: true,
+				description: '7AM'
 			},
 			{
-				ID: 2,
-				Name: '8AM',
-				Enabled: true,
-				Description: '8AM'
+				id: 2,
+				name: '8AM',
+				enabled: true,
+				description: '8AM'
 			},
 			{
-				ID: 3,
-				Name: '9AM',
-				Enabled: true,
-				Description: '9AM'
+				id: 3,
+				name: '9AM',
+				enabled: true,
+				description: '9AM'
 			}
 		];
 	}

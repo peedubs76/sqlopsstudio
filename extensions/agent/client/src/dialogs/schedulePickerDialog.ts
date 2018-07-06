@@ -37,8 +37,9 @@ export class SchedulePickerDialog {
 						this.SchedulesTable_EnabledColumnString,
 						this.SchedulesTable_DescriptionColumnString
 					],
-					// todo - filter the list
-					data: this.model.schedules,
+					data: this.model.schedules.filter(schedule => {
+						return this.jobModel.jobSchedules.findIndex((schedule2) => { return schedule2.id === schedule.id; }) === -1;
+					}),
 					height: 800,
 					width: 300
 				}).component();
@@ -61,7 +62,9 @@ export class SchedulePickerDialog {
 	}
 
 	private async execute() {
-
+		if (this.schedulesTable.selectedRows && this.schedulesTable.selectedRows.length === 1) {
+			this.jobModel.jobSchedules.push(this.model.schedules[this.schedulesTable.selectedRows[1]]);
+		}
 	}
 
 	private async cancel() {
