@@ -73,14 +73,16 @@ export class CreateStepDialog {
 	private server: string;
 
 	private parentDialog: CreateJobDialog;
-	private stepIndex: number;
+	private stepIndex?: number;
+	private editStep?: boolean;
 
 	constructor(
 		ownerUri: string,
 		jobId: string,
 		server: string,
 		parentDialog?: CreateJobDialog,
-		stepIndex?: number
+		stepIndex?: number,
+		editStep?: boolean
 	) {
 		this.model = new CreateStepData(ownerUri);
 		this.ownerUri = ownerUri;
@@ -88,6 +90,7 @@ export class CreateStepDialog {
 		this.server = server;
 		this.parentDialog = parentDialog;
 		this.stepIndex = stepIndex;
+		this.editStep = editStep;
 	}
 
 	private initializeUIComponents() {
@@ -468,7 +471,13 @@ export class CreateStepDialog {
 		this.model.outputFileName = this.outputFileNameBox.value;
 		if (this.parentDialog) {
 			if (this.stepIndex) {
-				this.parentDialog.model.jobSteps.splice(this.stepIndex, 0, this.model);
+				if (this.editStep) {
+					this.parentDialog.model.jobSteps[this.stepIndex] = this.model;
+				}
+				else {
+					this.parentDialog.model.jobSteps.splice(this.stepIndex, 0, this.model);
+				}
+
 			} else {
 				this.parentDialog.model.jobSteps.push(this.model);
 			}

@@ -6,6 +6,7 @@
 import * as sqlops from 'sqlops';
 import { CreateJobData } from '../data/createJobData';
 import { CreateStepDialog } from './createStepDialog';
+import { SchedulePickerDialog } from './schedulePickerDialog';
 
 export class CreateJobDialog {
 
@@ -54,6 +55,16 @@ export class CreateJobDialog {
 	private readonly EventLogCheckBoxString: string = 'Write to the Windows Application event log';
 	private readonly DeleteJobCheckBoxString: string = 'Automatically delete job';
 
+	// Schedules tab strings
+	//
+	private readonly SchedulesListString: string = 'Schedule list';
+	private readonly SchedulesTable_IdColumnString: string = 'ID';
+	private readonly SchedulesTable_NameColumnString: string = 'Name';
+	private readonly SchedulesTable_EnabledColumnString: string = 'Enabled';
+	private readonly SchedulesTable_DescriptionColumnString: string = 'Description';
+	private readonly PickScheduleButtonString: string = 'Pick...';
+	private readonly RemoveScheduleButtonString: string = 'Remove';
+
 	// UI Components
 	//
 	private dialog: sqlops.window.modelviewdialog.Dialog;
@@ -96,6 +107,12 @@ export class CreateJobDialog {
 	private eventLogConditionDropdown: sqlops.DropDownComponent;
 	private deleteJobCheckBox: sqlops.CheckBoxComponent;
 	private deleteJobConditionDropdown: sqlops.DropDownComponent;
+
+	// Schedules tab controls
+	//
+	private schedulesTable: sqlops.TableComponent;
+	private pickScheduleButton: sqlops.ButtonComponent;
+	private removeScheduleButton: sqlops.ButtonComponent;
 
 	public model: CreateJobData;
 
@@ -197,7 +214,7 @@ export class CreateJobDialog {
 				this.insertStepButton.enabled = enableButtons;
 				this.editStepButton.enabled = enableButtons;
 				this.deleteStepButton.enabled = enableButtons;
-				this.moveStepDownButton.enabled = enableButtons && this.model.jobSteps.length > this.stepsTable.selectedRows[0];
+				this.moveStepDownButton.enabled = enableButtons && this.model.jobSteps.length - 1 > this.stepsTable.selectedRows[0];
 				this.moveStepUpButton.enabled = enableButtons && this.stepsTable.selectedRows[0] > 0;
 			});
 
@@ -217,14 +234,23 @@ export class CreateJobDialog {
 			}).component();
 
 			this.insertStepButton.onDidClick(() => {
-				let stepDialog = new CreateStepDialog(this.model.ownerUri, '', '', this, this.stepsTable.selectedRows[0]);
-				stepDialog.openNewStepDialog();
+				if (this.stepsTable.selectedRows && this.stepsTable.selectedRows.length === 1) {
+					let stepDialog = new CreateStepDialog(this.model.ownerUri, '', '', this, this.stepsTable.selectedRows[0]);
+					stepDialog.openNewStepDialog();
+				}
 			});
 
 			this.editStepButton = view.modelBuilder.button().withProperties({
 				label: this.EditStepButtonString,
 				width: 80
 			}).component();
+
+			this.editStepButton.onDidClick(() => {
+				if (this.stepsTable.selectedRows && this.stepsTable.selectedRows.length === 1) {
+					let stepDialog = new CreateStepDialog(this.model.ownerUri, '', '', this, this.stepsTable.selectedRows[0], true);
+					stepDialog.openNewStepDialog();
+				}
+			});
 
 			this.deleteStepButton = view.modelBuilder.button().withProperties({
 				label: this.DeleteStepButtonString,
@@ -266,8 +292,8 @@ export class CreateJobDialog {
 
 			this.startStepDropdown = view.modelBuilder.dropDown().withProperties({ width: 150 }).component();
 
-			let buttonGroup1 = this.createRowContainer(view).withItems([this.moveStepLabel, this.moveStepUpButton, this.moveStepDownButton]).component();
-			let buttonGroup2 = this.createRowContainer(view).withItems([this.startStepLabel, this.startStepDropdown]).component();
+			let buttonGroup1 = this.createRowContainer(view, 250).withItems([this.moveStepLabel, this.moveStepUpButton, this.moveStepDownButton]).component();
+			let buttonGroup2 = this.createRowContainer(view, 250).withItems([this.startStepLabel, this.startStepDropdown]).component();
 			let buttonGroup3 = this.createRowContainer(view).withItems([this.newStepButton, this.insertStepButton, this.editStepButton, this.deleteStepButton]).component();
 			this.insertStepButton.enabled = false;
 			this.editStepButton.enabled = false;
@@ -298,6 +324,54 @@ export class CreateJobDialog {
 	}
 
 	private initializeSchedulesTab() {
+		this.schedulesTab.registerContent(async view => {
+			this.schedulesTable = view.modelBuilder.table()
+				.withProperties({
+					columns: [
+						this.SchedulesTable_IdColumnString,
+						this.SchedulesTable_NameColumnString,
+						this.SchedulesTable_EnabledColumnString,
+						this.SchedulesTable_DescriptionColumnString
+					],
+					data: [],
+					height: 500
+				}).component();
+			this.schedulesTable.onRowSelected(() => {
+				this.removeScheduleButton.enabled = this.schedulesTable.selectedRows && this.schedulesTable.selectedRows.length === 1;
+			});
+
+			this.pickScheduleButton = view.modelBuilder.button().withProperties({
+				label: this.PickScheduleButtonString,
+				width: 80
+			}).component();
+
+			this.pickScheduleButton.onDidClick(() => {
+				let dialog = new SchedulePickerDialog(this.model);
+				dialog.showDialog();
+			});
+
+			this.removeScheduleButton = view.modelBuilder.button().withProperties({
+				label: this.RemoveScheduleButtonString,
+				width: 80
+			}).component();
+
+			this.removeScheduleButton.onDidClick(() => {
+				if (this.schedulesTable.selectedRows && this.schedulesTable.selectedRows.length === 1) {
+					this.model.jobSchedules.splice(this.schedulesTable.selectedRows[0], 0);
+					this.refreshSchedules();
+				}
+			});
+
+			this.removeScheduleButton.enabled = false;
+
+			let formModel = view.modelBuilder.formContainer()
+				.withFormItems([{
+					component: this.schedulesTable,
+					title: this.SchedulesListString,
+					actions: [this.pickScheduleButton, this.removeScheduleButton]
+				}]).withLayout({ width: '100%' }).component();
+			await view.initializeModel(formModel);
+		});
 	}
 
 	private initializeNotificationsTab() {
@@ -396,11 +470,12 @@ export class CreateJobDialog {
 		});
 	}
 
-	private createRowContainer(view: sqlops.ModelView): sqlops.FlexBuilder {
+	private createRowContainer(view: sqlops.ModelView, width?: number): sqlops.FlexBuilder {
 		return view.modelBuilder.flexContainer().withLayout({
 			flexFlow: 'row',
 			alignItems: 'left',
-			justifyContent: 'space-between'
+			justifyContent: 'space-between',
+			width: width
 		});
 	}
 
@@ -465,5 +540,13 @@ export class CreateJobDialog {
 		this.stepsTable.data = stepsData;
 		this.startStepDropdown.values = stepList;
 		this.startStepDropdown.enabled = stepList.length > 0;
+	}
+
+	public refreshSchedules() {
+		let schedules = [];
+		this.model.jobSchedules.forEach(schedule => {
+			schedules.push([]);
+		});
+		this.schedulesTable.data = schedules;
 	}
 }

@@ -6,7 +6,6 @@
 
 import * as sqlops from 'sqlops';
 import { AgentUtils } from '../agentUtils';
-import { runInThisContext } from 'vm';
 
 export class CreateJobData {
 
