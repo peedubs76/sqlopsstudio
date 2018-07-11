@@ -6,6 +6,7 @@
 import * as sqlops from 'sqlops';
 import { SchedulePickerData } from '../data/schedulePickerData';
 import { CreateJobData } from '../data/createJobData';
+import { CreateJobDialog } from './createJobDialog';
 
 export class SchedulePickerDialog {
 	private readonly SchedulesListString: string = 'Available schedules';
@@ -18,15 +19,21 @@ export class SchedulePickerDialog {
 	private model: SchedulePickerData;
 	private dialog: sqlops.window.modelviewdialog.Dialog;
 	private schedulesTable: sqlops.TableComponent;
-	private jobModel: CreateJobData;
+	private parentDialog: CreateJobDialog;
+	private availableSchedules: sqlops.AgentJobScheduleInfo[];
 
-	constructor(jobModel: CreateJobData) {
-		this.model = new SchedulePickerData(jobModel.ownerUri);
-		this.jobModel = jobModel;
+	constructor(parentDialog: CreateJobDialog) {
+		this.model = new SchedulePickerData(parentDialog.model.ownerUri);
+		this.parentDialog = parentDialog;
 	}
 
 	public async showDialog() {
 		await this.model.initialize();
+		let scheduleData = [];
+		this.availableSchedules = this.model.schedules.filter(schedule => { return this.parentDialog.model.jobSchedules.findIndex(s => { return s.id === schedule.id; }) === -1; });
+		this.availableSchedules.forEach(s => {
+			scheduleData.push([s.id, s.name, s.enabled, s.description]);
+		});
 		this.dialog = sqlops.window.modelviewdialog.createDialog(this.DialogTitle);
 		this.dialog.registerContent(async view => {
 			this.schedulesTable = view.modelBuilder.table()
@@ -37,11 +44,9 @@ export class SchedulePickerDialog {
 						this.SchedulesTable_EnabledColumnString,
 						this.SchedulesTable_DescriptionColumnString
 					],
-					data: this.model.schedules.filter(schedule => {
-						return this.jobModel.jobSchedules.findIndex((schedule2) => { return schedule2.id === schedule.id; }) === -1;
-					}),
-					height: 800,
-					width: 300
+					data: scheduleData,
+					height: 500,
+					width: 450
 				}).component();
 
 			this.schedulesTable.onRowSelected(() => {
@@ -63,7 +68,8 @@ export class SchedulePickerDialog {
 
 	private async execute() {
 		if (this.schedulesTable.selectedRows && this.schedulesTable.selectedRows.length === 1) {
-			this.jobModel.jobSchedules.push(this.model.schedules[this.schedulesTable.selectedRows[1]]);
+			this.parentDialog.model.jobSchedules.push(this.availableSchedules[this.schedulesTable.selectedRows[0]]);
+			this.parentDialog.refreshSchedules();
 		}
 	}
 

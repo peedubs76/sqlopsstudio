@@ -155,7 +155,8 @@ export class CreateStepDialog {
 				height: 300,
 				width: 350,
 				multiline: true,
-				inputType: 'text'
+				inputType: 'text',
+				value: this.model.script
 			})
 			.component();
 
@@ -176,10 +177,11 @@ export class CreateStepDialog {
 		this.generalTab.registerContent(async (view) => {
 			this.nameTextBox = view.modelBuilder.inputBox()
 				.withProperties({
+					value: this.model.stepName
 				}).component();
 			this.typeDropdown = view.modelBuilder.dropDown()
 				.withProperties({
-					value: CreateStepDialog.TSQLScript,
+					value: this.model.subSystem,
 					values: [CreateStepDialog.TSQLScript]
 				})
 				.component();
@@ -201,7 +203,7 @@ export class CreateStepDialog {
 			});
 			this.databaseDropdown = view.modelBuilder.dropDown()
 				.withProperties({
-					value: databases[0],
+					value: this.model.databaseName,
 					values: databases
 				}).component();
 
@@ -287,14 +289,14 @@ export class CreateStepDialog {
 		this.advancedTab.registerContent(async (view) => {
 			this.successActionDropdown = view.modelBuilder.dropDown()
 				.withProperties({
-					value: CreateStepDialog.NextStep,
+					value: this.model.successAction,
 					values: [CreateStepDialog.NextStep, CreateStepDialog.QuitJobReportingSuccess, CreateStepDialog.QuitJobReportingFailure]
 				})
 				.component();
 			let retryFlexContainer = this.createRetryCounters(view);
 			this.failureActionDropdown = view.modelBuilder.dropDown()
 				.withProperties({
-					value: CreateStepDialog.QuitJobReportingFailure,
+					value: this.model.failureAction,
 					values: [CreateStepDialog.QuitJobReportingFailure, CreateStepDialog.NextStep, CreateStepDialog.QuitJobReportingSuccess]
 				})
 				.component();
@@ -413,7 +415,8 @@ export class CreateStepDialog {
 		this.outputFileNameBox = view.modelBuilder.inputBox()
 			.withProperties({
 				width: '100px',
-				inputType: 'text'
+				inputType: 'text',
+				value: this.model.outputFileName
 			}).component();
 		let outputViewButton = view.modelBuilder.button()
 			.withProperties({
@@ -470,7 +473,7 @@ export class CreateStepDialog {
 		this.model.failureAction = this.failureActionDropdown.value as string;
 		this.model.outputFileName = this.outputFileNameBox.value;
 		if (this.parentDialog) {
-			if (this.stepIndex) {
+			if (this.stepIndex !== undefined) {
 				if (this.editStep) {
 					this.parentDialog.model.jobSteps[this.stepIndex] = this.model;
 				}
@@ -509,9 +512,32 @@ export class CreateStepDialog {
 		fileBrowserService.registerOnFileBrowserOpened((response: sqlops.FileBrowserOpenedParams) => {
 			this.onFileBrowserOpened(fileBrowserService.handle, response);
 		});
+		this.setInitialData(databases);
 		this.initializeUIComponents();
 		this.createGeneralTab(databases, queryProvider);
 		this.createAdvancedTab(fileBrowserService);
 		sqlops.window.modelviewdialog.openDialog(this.dialog);
+	}
+
+	private setInitialData(databases: string[]) {
+		if (this.editStep) {
+			let stepData = this.parentDialog.model.jobSteps[this.stepIndex];
+			this.model.stepName = stepData.stepName;
+			this.model.subSystem = stepData.subSystem;
+			this.model.databaseName = stepData.databaseName;
+			this.model.script = stepData.script;
+			this.model.successAction = stepData.successAction;
+			this.model.retryAttempts = stepData.retryAttempts;
+			this.model.retryInterval = stepData.retryInterval;
+			this.model.failureAction = stepData.failureAction;
+			this.model.outputFileName = stepData.outputFileName;
+		} else {
+			this.model.subSystem = CreateStepDialog.TSQLScript;
+			this.model.databaseName = databases[0];
+			this.model.successAction = CreateStepDialog.NextStep;
+			this.model.failureAction = CreateStepDialog.QuitJobReportingFailure;
+			this.model.retryAttempts = 0;
+			this.model.retryInterval = 0;
+		}
 	}
 }

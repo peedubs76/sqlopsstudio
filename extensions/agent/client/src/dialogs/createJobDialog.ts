@@ -405,7 +405,7 @@ export class CreateJobDialog {
 			}).component();
 
 			this.pickScheduleButton.onDidClick(() => {
-				let dialog = new SchedulePickerDialog(this.model);
+				let dialog = new SchedulePickerDialog(this);
 				dialog.showDialog();
 			});
 
@@ -604,7 +604,7 @@ export class CreateJobDialog {
 	public refreshSchedules() {
 		let schedules = [];
 		this.model.jobSchedules.forEach(schedule => {
-			schedules.push([]);
+			schedules.push([schedule.id, schedule.name, schedule.enabled, schedule.description]);
 		});
 		this.schedulesTable.data = schedules;
 	}

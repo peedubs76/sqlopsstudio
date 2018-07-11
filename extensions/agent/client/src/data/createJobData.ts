@@ -143,6 +143,6 @@ export class CreateJobData {
 		return {
 			valid: validationErrors.length > 0,
 			errorMessages: validationErrors
-		}
+		};
 	}
 }
