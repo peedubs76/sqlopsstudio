@@ -5,7 +5,7 @@
 
 import 'vs/css!./jobStepsView';
 
-import { OnInit, Component, Inject, forwardRef, ElementRef, ChangeDetectorRef, ViewChild, Injectable, AfterContentChecked } from '@angular/core';
+import { OnInit, Component, Inject, forwardRef, ElementRef, ChangeDetectorRef, ViewChild, AfterContentChecked } from '@angular/core';
 import { attachListStyler } from 'vs/platform/theme/common/styler';
 import { Tree } from 'vs/base/parts/tree/browser/treeImpl';
 import { ScrollbarVisibility } from 'vs/base/common/scrollable';
@@ -20,7 +20,7 @@ import { IKeybindingService } from 'vs/platform/keybinding/common/keybinding';
 import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { TabChild } from 'sql/base/browser/ui/panel/tab.component';
-import * as dom from 'vs/base/browser/dom';
+import { ICommandService } from 'vs/platform/commands/common/commands';
 
 export const JOBSTEPSVIEW_SELECTOR: string = 'jobstepsview-component';
 
@@ -32,7 +32,7 @@ export const JOBSTEPSVIEW_SELECTOR: string = 'jobstepsview-component';
 export class JobStepsViewComponent extends JobManagementView  implements OnInit, AfterContentChecked {
 
 	private _tree: Tree;
-	private _treeController = new JobStepsViewController();
+	private _treeController: JobStepsViewController;
 	private _treeDataSource = new JobStepsViewDataSource();
 	private _treeRenderer = new JobStepsViewRenderer();
 	private _treeFilter =  new JobStepsViewFilter();
@@ -47,11 +47,17 @@ export class JobStepsViewComponent extends JobManagementView  implements OnInit,
 		@Inject(forwardRef(() => JobHistoryComponent)) private _jobHistoryComponent: JobHistoryComponent,
 		@Inject(IWorkbenchThemeService) private themeService: IWorkbenchThemeService,
 		@Inject(IInstantiationService) instantiationService: IInstantiationService,
-		@Inject(IContextMenuService) contextMenuService: IContextMenuService,
+		@Inject(IContextMenuService) private contextMenuService: IContextMenuService,
 		@Inject(IKeybindingService)  keybindingService: IKeybindingService,
-		@Inject(IDashboardService) dashboardService: IDashboardService
+		@Inject(IDashboardService) dashboardService: IDashboardService,
+		@Inject(ICommandService) private _commandService: ICommandService
 	) {
 		super(commonService, dashboardService, contextMenuService, keybindingService, instantiationService);
+		let serverName = this._jobHistoryComponent.serverName;
+		let jobId = this._jobHistoryComponent.agentJobInfo.jobId;
+		let ownerUri = this._commonService.connectionManagementService.connectionInfo.ownerUri;
+		this._treeController = new JobStepsViewController(serverName, jobId, ownerUri, this._contextMenuService, this._instantiationService);
+
 	}
 
 	ngAfterContentChecked() {
@@ -88,6 +94,13 @@ export class JobStepsViewComponent extends JobManagementView  implements OnInit,
 	}
 
 	public layout() {
+	}
+
+	public openStepDialog() {
+		let ownerUri: string = this._commonService.connectionManagementService.connectionInfo.ownerUri;
+		let jobId: string = this._jobHistoryComponent.agentJobHistoryInfo.jobId;
+		let server: string = this._commonService.connectionManagementService.connectionInfo.connectionProfile.serverName;
+		this._commandService.executeCommand('agent.openNewStepDialog', ownerUri, jobId, server);
 	}
 }
 

@@ -74,7 +74,6 @@ export class JobHistoryComponent extends JobManagementView implements OnInit {
 		@Inject(forwardRef(() => CommonServiceInterface)) commonService: CommonServiceInterface,
 		@Inject(forwardRef(() => AgentViewComponent)) private _agentViewComponent: AgentViewComponent,
 		@Inject(IWorkbenchThemeService) private themeService: IWorkbenchThemeService,
-		@Inject(INotificationService) private _notificationService: INotificationService,
 		@Inject(IInstantiationService) private instantiationService: IInstantiationService,
 		@Inject(IContextMenuService) private contextMenuService: IContextMenuService,
 		@Inject(IJobManagementService) private _jobManagementService: IJobManagementService,
@@ -82,10 +81,6 @@ export class JobHistoryComponent extends JobManagementView implements OnInit {
 		@Inject(IDashboardService) dashboardService: IDashboardService
 	) {
 		super(commonService, dashboardService, contextMenuService, keybindingService, instantiationService);
-		this._treeController = new JobHistoryController();
-		this._treeDataSource = new JobHistoryDataSource();
-		this._treeRenderer = new JobHistoryRenderer();
-		this._treeFilter =  new JobHistoryFilter();
 		let jobCacheObjectMap = this._jobManagementService.jobCacheObjectMap;
 		this._serverName = commonService.connectionManagementService.connectionInfo.connectionProfile.serverName;
 		let jobCache = jobCacheObjectMap[this._serverName];
@@ -96,6 +91,10 @@ export class JobHistoryComponent extends JobManagementView implements OnInit {
 			this._jobCacheObject.serverName = this._serverName;
 			this._jobManagementService.addToCache(this._serverName, this._jobCacheObject);
 		}
+		this._treeController = new JobHistoryController();
+		this._treeDataSource = new JobHistoryDataSource();
+		this._treeRenderer = new JobHistoryRenderer();
+		this._treeFilter =  new JobHistoryFilter();
 	}
 
 	ngOnInit() {

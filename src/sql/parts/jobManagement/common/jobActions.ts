@@ -16,6 +16,7 @@ import { JobsViewComponent } from '../views/jobsView.component';
 import { AlertsViewComponent } from 'sql/parts/jobManagement/views/alertsView.component';
 import { OperatorsViewComponent } from 'sql/parts/jobManagement/views/operatorsView.component';
 import { ProxiesViewComponent } from 'sql/parts/jobManagement/views/proxiesView.component';
+import { JobStepsViewComponent } from 'sql/parts/jobManagement/views/jobStepsView.component';
 
 export enum JobActions {
 	Run = 'run',
@@ -222,6 +223,28 @@ export class NewStepAction extends Action {
 		});
 	}
 }
+
+export class EditStepAction extends Action {
+	public static ID = 'jobaction.editStep';
+	public static LABEL = nls.localize('jobaction.editStep', "Edit Step");
+
+	constructor(
+		@ICommandService private _commandService: ICommandService
+	) {
+		super(EditStepAction.ID, EditStepAction.LABEL);
+	}
+
+	public run(actionInfo: IJobActionInfo): TPromise<boolean> {
+		this._commandService.executeCommand(
+			'agent.openNewStepDialog',
+			 actionInfo.ownerUri,
+			 actionInfo.targetObject.jobId,
+			 actionInfo.targetObject.serverName,
+			 actionInfo.targetObject.stepId);
+		return TPromise.as(true);
+	}
+}
+
 
 // Alert Actions
 

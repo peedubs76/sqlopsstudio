@@ -12,6 +12,10 @@ import { IMouseEvent } from 'vs/base/browser/mouseEvent';
 import { generateUuid } from 'vs/base/common/uuid';
 import { AgentJobHistoryInfo } from 'sqlops';
 import { JobManagementUtilities } from 'sql/parts/jobManagement/common/jobManagementUtilities';
+import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
+import { IAction } from 'vs/base/common/actions';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { EditStepAction } from '../common/jobActions';
 
 export class JobStepsViewRow {
 	public stepID: string;
@@ -28,13 +32,48 @@ export class JobStepsViewModel {
 
 export class JobStepsViewController extends TreeDefaults.DefaultController {
 	private _jobHistories: AgentJobHistoryInfo[];
+	private _server: string;
+	private _jobId: string;
+	private _ownerUri: string;
+
+	constructor (
+		serverName: string,
+		jobId: string,
+		ownerUri: string,
+		private _contextMenuService: IContextMenuService,
+		private _instantiationService: IInstantiationService
+	) {
+		super();
+		this._server = serverName;
+		this._jobId = jobId;
+		this._ownerUri = ownerUri;
+	}
 
 	protected onLeftClick(tree: tree.ITree, element: JobStepsViewRow, event: IMouseEvent, origin: string = 'mouse'): boolean {
 		return true;
 	}
 
 	public onContextMenu(tree: tree.ITree, element: JobStepsViewRow, event: tree.ContextMenuEvent): boolean {
+		let stepId: number = +element.stepID;
+		this._contextMenuService.showContextMenu({
+			getAnchor: () => { return { x: event.posx, y: event.posy }; },
+			getActions: () => this.getStepsActions(),
+			getActionsContext: () => ({
+				ownerUri: this._ownerUri,
+				targetObject: {
+					jobId: this._jobId,
+					serverName: this._server,
+					stepId: stepId
+				}
+			})
+		});
 		return true;
+	}
+
+	private getStepsActions(): Promise<IAction[]> {
+		let actions: IAction[] = [];
+		actions.push(this._instantiationService.createInstance(EditStepAction));
+		return Promise.as(actions);
 	}
 
 	public set jobHistories(value: AgentJobHistoryInfo[]) {
@@ -43,6 +82,22 @@ export class JobStepsViewController extends TreeDefaults.DefaultController {
 
 	public get jobHistories(): AgentJobHistoryInfo[] {
 		return this._jobHistories;
+	}
+
+	public set server(serverName: string) {
+		this._server = serverName;
+	}
+
+	public get server(): string {
+		return this._server;
+	}
+
+	public set jobId(value: string) {
+		this._jobId = value;
+	}
+
+	public get jobId() {
+		return this._jobId;
 	}
 
 }
