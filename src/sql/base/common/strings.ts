@@ -15,7 +15,6 @@ export function escape(html: string): string {
 			case '>': return '&gt;';
 			case '&': return '&amp;';
 			case '"': return '&quot;';
-			case '\'': return '&#39';
 			default: return match;
 		}
 	});
